@@ -1,0 +1,589 @@
+/* =============================================================================
+   BuyWise — Design System
+   =============================================================================
+   A premium, modern design system for India's real estate transaction platform.
+   
+   Design Philosophy:
+   - Dark mode primary (premium feel, reduces eye strain)
+   - Accent colors inspired by trust (deep blue) and growth (emerald)
+   - Glassmorphism for elevated surfaces
+   - Smooth micro-animations throughout
+   - Mobile-first responsive design
+   ============================================================================= */
+
+/* =============================================================================
+   1. CSS CUSTOM PROPERTIES (Design Tokens)
+   ============================================================================= */
+
+:root {
+  /* --- Color Palette --- */
+  
+  /* Primary: Deep Trust Blue */
+  --color-primary-50:  #eef2ff;
+  --color-primary-100: #dbe4ff;
+  --color-primary-200: #bfcfff;
+  --color-primary-300: #93aeff;
+  --color-primary-400: #6084fc;
+  --color-primary-500: #3b5ef8;
+  --color-primary-600: #253eed;
+  --color-primary-700: #1d2eda;
+  --color-primary-800: #1e28b0;
+  --color-primary-900: #1e278b;
+  --color-primary-950: #161955;
+
+  /* Secondary: Emerald Growth */
+  --color-secondary-50:  #ecfdf5;
+  --color-secondary-100: #d1fae5;
+  --color-secondary-200: #a7f3d0;
+  --color-secondary-300: #6ee7b7;
+  --color-secondary-400: #34d399;
+  --color-secondary-500: #10b981;
+  --color-secondary-600: #059669;
+  --color-secondary-700: #047857;
+  --color-secondary-800: #065f46;
+  --color-secondary-900: #064e3b;
+  --color-secondary-950: #022c22;
+
+  /* Accent: Warm Amber (CTAs, urgency) */
+  --color-accent-50:  #fffbeb;
+  --color-accent-100: #fef3c7;
+  --color-accent-200: #fde68a;
+  --color-accent-300: #fcd34d;
+  --color-accent-400: #fbbf24;
+  --color-accent-500: #f59e0b;
+  --color-accent-600: #d97706;
+  --color-accent-700: #b45309;
+  --color-accent-800: #92400e;
+  --color-accent-900: #78350f;
+  --color-accent-950: #451a03;
+
+  /* Danger: Rose Red */
+  --color-danger-50:  #fff1f2;
+  --color-danger-100: #ffe4e6;
+  --color-danger-200: #fecdd3;
+  --color-danger-300: #fda4af;
+  --color-danger-400: #fb7185;
+  --color-danger-500: #f43f5e;
+  --color-danger-600: #e11d48;
+  --color-danger-700: #be123c;
+  --color-danger-800: #9f1239;
+  --color-danger-900: #881337;
+  --color-danger-950: #4c0519;
+
+  /* Neutral: Slate */
+  --color-neutral-50:  #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #020617;
+
+  /* --- Semantic Colors (Light Mode) --- */
+  --bg-primary:     #ffffff;
+  --bg-secondary:   #f8fafc;
+  --bg-tertiary:    #f1f5f9;
+  --bg-elevated:    #ffffff;
+  --bg-overlay:     rgba(15, 23, 42, 0.6);
+  
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary:  #94a3b8;
+  --text-inverse:   #ffffff;
+  --text-link:      #3b5ef8;
+  --text-link-hover:#253eed;
+
+  --border-primary:   #e2e8f0;
+  --border-secondary: #f1f5f9;
+  --border-focus:     #3b5ef8;
+
+  --surface-glass: rgba(255, 255, 255, 0.7);
+  --surface-glass-border: rgba(255, 255, 255, 0.2);
+
+  /* --- Typography --- */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Outfit', 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --text-xs:   0.75rem;    /* 12px */
+  --text-sm:   0.875rem;   /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg:   1.125rem;   /* 18px */
+  --text-xl:   1.25rem;    /* 20px */
+  --text-2xl:  1.5rem;     /* 24px */
+  --text-3xl:  1.875rem;   /* 30px */
+  --text-4xl:  2.25rem;    /* 36px */
+  --text-5xl:  3rem;       /* 48px */
+  --text-6xl:  3.75rem;    /* 60px */
+
+  --leading-tight:  1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  --weight-normal:   400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+  --weight-extrabold: 800;
+
+  /* --- Spacing --- */
+  --space-0:  0;
+  --space-1:  0.25rem;   /* 4px */
+  --space-2:  0.5rem;    /* 8px */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.25rem;   /* 20px */
+  --space-6:  1.5rem;    /* 24px */
+  --space-8:  2rem;      /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+  --space-20: 5rem;      /* 80px */
+  --space-24: 6rem;      /* 96px */
+
+  /* --- Border Radius --- */
+  --radius-sm:   0.375rem;  /* 6px */
+  --radius-md:   0.5rem;    /* 8px */
+  --radius-lg:   0.75rem;   /* 12px */
+  --radius-xl:   1rem;      /* 16px */
+  --radius-2xl:  1.5rem;    /* 24px */
+  --radius-full: 9999px;
+
+  /* --- Shadows --- */
+  --shadow-xs:  0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md:  0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg:  0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl:  0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-glow-primary: 0 0 20px rgba(59, 94, 248, 0.3);
+  --shadow-glow-secondary: 0 0 20px rgba(16, 185, 129, 0.3);
+
+  /* --- Transitions --- */
+  --transition-fast:    150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal:  250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow:    350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring:  500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* --- Z-Index Scale --- */
+  --z-dropdown:  10;
+  --z-sticky:    20;
+  --z-fixed:     30;
+  --z-modal-bg:  40;
+  --z-modal:     50;
+  --z-tooltip:   60;
+  --z-toast:     70;
+
+  /* --- Layout --- */
+  --max-width-sm:   640px;
+  --max-width-md:   768px;
+  --max-width-lg:   1024px;
+  --max-width-xl:   1280px;
+  --max-width-2xl:  1536px;
+  --container-padding: var(--space-4);
+  --header-height: 4rem;
+  --sidebar-width: 280px;
+}
+
+/* =============================================================================
+   2. DARK MODE
+   ============================================================================= */
+
+[data-theme="dark"] {
+  --bg-primary:     #0f172a;
+  --bg-secondary:   #1e293b;
+  --bg-tertiary:    #334155;
+  --bg-elevated:    #1e293b;
+  --bg-overlay:     rgba(0, 0, 0, 0.7);
+
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-tertiary:  #64748b;
+  --text-inverse:   #0f172a;
+  --text-link:      #6084fc;
+  --text-link-hover:#93aeff;
+
+  --border-primary:   #334155;
+  --border-secondary: #1e293b;
+  --border-focus:     #6084fc;
+
+  --surface-glass: rgba(30, 41, 59, 0.7);
+  --surface-glass-border: rgba(51, 65, 85, 0.5);
+
+  --shadow-xs:  0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md:  0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg:  0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  --shadow-xl:  0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+}
+
+/* =============================================================================
+   3. GLOBAL RESET & BASE STYLES
+   ============================================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+/* --- Typography --- */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+}
+
+h1 { font-size: var(--text-4xl); letter-spacing: -0.025em; }
+h2 { font-size: var(--text-3xl); letter-spacing: -0.02em; }
+h3 { font-size: var(--text-2xl); }
+h4 { font-size: var(--text-xl); }
+h5 { font-size: var(--text-lg); }
+h6 { font-size: var(--text-base); font-weight: var(--weight-semibold); }
+
+p {
+  color: var(--text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+a {
+  color: var(--text-link);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--text-link-hover);
+}
+
+/* --- Images --- */
+
+img, video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* --- Lists --- */
+
+ul, ol {
+  list-style: none;
+}
+
+/* --- Focus --- */
+
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* --- Selection --- */
+
+::selection {
+  background-color: var(--color-primary-200);
+  color: var(--color-primary-900);
+}
+
+[data-theme="dark"] ::selection {
+  background-color: var(--color-primary-800);
+  color: var(--color-primary-100);
+}
+
+/* =============================================================================
+   4. UTILITY CLASSES
+   ============================================================================= */
+
+/* --- Container --- */
+
+.container {
+  width: 100%;
+  max-width: var(--max-width-xl);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+}
+
+.container--sm { max-width: var(--max-width-sm); }
+.container--md { max-width: var(--max-width-md); }
+.container--lg { max-width: var(--max-width-lg); }
+.container--2xl { max-width: var(--max-width-2xl); }
+
+/* --- Glassmorphism --- */
+
+.glass {
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--surface-glass-border);
+}
+
+.glass--strong {
+  background: var(--surface-glass);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--surface-glass-border);
+}
+
+/* --- Gradients --- */
+
+.gradient-primary {
+  background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700));
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, var(--color-secondary-400), var(--color-secondary-600));
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, var(--color-accent-400), var(--color-accent-600));
+}
+
+.gradient-hero {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-600) 0%,
+    var(--color-primary-800) 50%,
+    var(--color-secondary-700) 100%
+  );
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-primary-400), var(--color-secondary-400));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* --- Animations --- */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-in      { animation: fadeIn var(--transition-normal) ease-out; }
+.animate-fade-in-up   { animation: fadeInUp var(--transition-slow) ease-out; }
+.animate-fade-in-down { animation: fadeInDown var(--transition-slow) ease-out; }
+.animate-scale-in     { animation: scaleIn var(--transition-normal) ease-out; }
+.animate-slide-right  { animation: slideInRight var(--transition-slow) ease-out; }
+.animate-pulse        { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+.animate-spin         { animation: spin 1s linear infinite; }
+
+/* Stagger children animations */
+.stagger-children > * {
+  animation: fadeInUp var(--transition-slow) ease-out both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 75ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 225ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 375ms; }
+
+/* Skeleton loading shimmer */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 0%,
+    var(--bg-secondary) 50%,
+    var(--bg-tertiary) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+/* --- Text utilities --- */
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-primary-400), var(--color-secondary-400));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --- Scrollbar --- */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-300);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-400);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-600);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-500);
+}
+
+/* =============================================================================
+   5. RESPONSIVE BREAKPOINTS
+   ============================================================================= */
+
+/* Mobile first — base styles are for mobile */
+
+/* sm: 640px */
+@media (min-width: 640px) {
+  :root {
+    --container-padding: var(--space-6);
+  }
+  h1 { font-size: var(--text-5xl); }
+  h2 { font-size: var(--text-4xl); }
+}
+
+/* md: 768px */
+@media (min-width: 768px) {
+  :root {
+    --container-padding: var(--space-8);
+  }
+}
+
+/* lg: 1024px */
+@media (min-width: 1024px) {
+  h1 { font-size: var(--text-6xl); }
+  h2 { font-size: var(--text-5xl); }
+}
+
+/* xl: 1280px */
+@media (min-width: 1280px) {
+  :root {
+    --container-padding: var(--space-10);
+  }
+}
+
+/* --- Reduced motion --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

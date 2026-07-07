@@ -1,0 +1,1123 @@
+// =============================================================================
+// BuyWise — Database Schema
+// =============================================================================
+// Transaction-centric domain model for India's real estate platform.
+// PostgreSQL + PostGIS on Neon (free tier).
+//
+// Core Design Principles:
+// 1. Transaction is the central entity — everything relates to it.
+// 2. Location is hierarchical — supports multi-city, multi-state.
+// 3. Services are catalogued and location-aware.
+// 4. AI analysis results are stored as JSONB for flexibility.
+// 5. AuditEvent provides immutable history.
+// =============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+// =============================================================================
+// 1. USER
+// =============================================================================
+
+enum UserRole {
+  BUYER
+  SELLER
+  AGENT
+  ADMIN
+  SERVICE_PROVIDER
+}
+
+enum KycStatus {
+  NONE
+  BASIC
+  VERIFIED
+  REJECTED
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String?   @unique
+  emailVerified   DateTime?
+  phone           String?   @unique
+  name            String?
+  avatarUrl       String?
+  role            UserRole  @default(BUYER)
+  kycStatus       KycStatus @default(NONE)
+
+  // Preferences (for recommendations)
+  preferredLocations    String[]  // Location IDs
+  preferredPropertyTypes PropertyType[]
+  budgetMin             Float?
+  budgetMax             Float?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastActiveAt    DateTime  @default(now())
+
+  // Auth relations (NextAuth)
+  accounts        Account[]
+  sessions        Session[]
+
+  // Domain relations
+  transactionsAsBuyer   Transaction[] @relation("BuyerTransactions")
+  transactionsAsSeller  Transaction[] @relation("SellerTransactions")
+  properties            Property[]    @relation("ListedProperties")
+  documents             Document[]    @relation("UploadedDocuments")
+  payments              Payment[]
+  reports               Report[]      @relation("PurchasedReports")
+  notifications         Notification[]
+  savedSearches         SavedSearch[]
+  serviceProvider       ServiceProvider?
+  auditEvents           AuditEvent[]  @relation("ActorEvents")
+  aiConversations       AIConversation[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+}
+
+// NextAuth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// =============================================================================
+// 2. LOCATION (Hierarchical, Multi-Geography)
+// =============================================================================
+
+enum LocationType {
+  COUNTRY
+  STATE
+  DISTRICT
+  CITY
+  ZONE
+  LOCALITY
+  MICRO_LOCATION
+}
+
+model Location {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  type        LocationType
+  parentId    String?
+  parent      Location?    @relation("LocationHierarchy", fields: [parentId], references: [id])
+  children    Location[]   @relation("LocationHierarchy")
+
+  // Geographic data (PostGIS) — stored as GeoJSON in JSONB for now
+  // PostGIS geometry columns can be added via raw SQL migration when needed
+  geoBoundary Json?   // GeoJSON Polygon
+  geoCenter   Json?   // GeoJSON Point {lat, lng}
+  pincodes    String[]
+
+  // Metadata
+  description String?
+  isActive    Boolean @default(true)
+  metadata    Json?   // Location-type-specific extra data
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  properties            Property[]
+  transactions          Transaction[]
+  localityScores        LocalityScore[]
+  priceDataPoints       PriceDataPoint[]
+  infrastructureProjects InfrastructureProject[]
+  locationConfigs       LocationConfig[]
+  servicePricings       ServicePricing[]
+  serviceProviders      ServiceProviderLocation[]
+  reports               Report[]       @relation("LocationReports")
+
+  @@index([parentId])
+  @@index([type])
+  @@index([slug])
+  @@index([isActive])
+}
+
+model LocalityScore {
+  id           String   @id @default(cuid())
+  locationId   String
+  location     Location @relation(fields: [locationId], references: [id])
+
+  // Scores (0-10 scale)
+  growth         Float   // Long-term appreciation potential
+  livability     Float   // Quality of daily life
+  connectivity   Float   // Transport, roads, metro access
+  affordability  Float   // Price relative to city average
+  infrastructure Float   // Water, power, drainage, roads
+  safety         Float   // General safety perception
+  overall        Float   // Weighted composite
+
+  // Methodology
+  methodology   String?  // How scores were computed
+  dataSources   String[] // Where data came from
+  lastVerified  DateTime @default(now())
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([locationId])
+}
+
+model PriceDataPoint {
+  id           String   @id @default(cuid())
+  locationId   String
+  location     Location @relation(fields: [locationId], references: [id])
+
+  propertyType PropertyType
+  pricePerSqft Float
+  totalPrice   Float?
+  areaSize     Float?    // sq ft
+  date         DateTime
+  source       String    // Where this data came from
+  isVerified   Boolean   @default(false)
+
+  createdAt    DateTime  @default(now())
+
+  @@index([locationId, propertyType, date])
+}
+
+model InfrastructureProject {
+  id           String   @id @default(cuid())
+  locationId   String
+  location     Location @relation(fields: [locationId], references: [id])
+
+  name         String
+  type         String   // METRO, ROAD, FLYOVER, TECH_PARK, MALL, HOSPITAL, etc.
+  description  String
+  status       String   // ANNOUNCED, UNDER_CONSTRUCTION, COMPLETED
+  expectedCompletion DateTime?
+  impactDescription  String?  // How this affects the locality
+  sourceUrl    String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([locationId])
+}
+
+model LocationConfig {
+  id           String   @id @default(cuid())
+  locationId   String
+  location     Location @relation(fields: [locationId], references: [id])
+
+  configType   String   // STAMP_DUTY, REGISTRATION_FEE, RERA_RULES, TAX_RULES, PROCESS_TEMPLATE
+  configData   Json     // Type-specific structured configuration
+  validFrom    DateTime
+  validUntil   DateTime?
+  source       String?  // Legal source reference
+  lastVerified DateTime @default(now())
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([locationId, configType])
+  @@unique([locationId, configType, validFrom])
+}
+
+// =============================================================================
+// 3. PROPERTY
+// =============================================================================
+
+enum PropertyType {
+  APARTMENT
+  PLOT
+  VILLA
+  INDEPENDENT_HOUSE
+  COMMERCIAL_SHOP
+  COMMERCIAL_OFFICE
+  AGRICULTURAL_LAND
+  PG
+  PENTHOUSE
+}
+
+enum PropertyStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  UNDER_TRANSACTION
+  SOLD
+  RENTED
+  DELISTED
+  REJECTED
+}
+
+enum ListingType {
+  OWNER
+  AGENT
+  BUILDER
+}
+
+enum FurnishingStatus {
+  UNFURNISHED
+  SEMI_FURNISHED
+  FULLY_FURNISHED
+}
+
+enum FacingDirection {
+  NORTH
+  SOUTH
+  EAST
+  WEST
+  NORTH_EAST
+  NORTH_WEST
+  SOUTH_EAST
+  SOUTH_WEST
+}
+
+enum VerificationLevel {
+  UNVERIFIED
+  BASIC_VERIFIED
+  VERIFIED
+  PREMIUM_VERIFIED
+}
+
+model Property {
+  id              String          @id @default(cuid())
+  type            PropertyType
+  status          PropertyStatus  @default(DRAFT)
+  title           String
+  description     String
+
+  // Location
+  locationId      String
+  location        Location        @relation(fields: [locationId], references: [id])
+  addressLine1    String?
+  addressLine2    String?
+  landmark        String?
+  pincode         String?
+  latitude        Float?
+  longitude       Float?
+
+  // Area
+  carpetArea      Float?          // sq ft
+  builtUpArea     Float?
+  superBuiltUpArea Float?
+  plotArea         Float?
+
+  // Configuration (for apartments/houses)
+  bedrooms        Int?
+  bathrooms       Int?
+  balconies       Int?
+  totalFloors     Int?
+  floorNumber     Int?
+  facing          FacingDirection?
+  furnishing      FurnishingStatus?
+  ageYears        Int?
+
+  // Amenities
+  amenities       String[]        // parking, gym, swimming_pool, etc.
+
+  // Pricing
+  askingPrice     Float
+  pricePerSqft    Float?
+  isNegotiable    Boolean         @default(true)
+  priceIncludes   String[]        // registration, parking, etc.
+  maintenanceMonthly Float?
+
+  // Listing metadata
+  listedById      String
+  listedBy        User            @relation("ListedProperties", fields: [listedById], references: [id])
+  listingType     ListingType
+  reraId          String?
+
+  // Verification
+  verificationLevel VerificationLevel @default(UNVERIFIED)
+
+  // AI-generated scores
+  aiScore         Json?           // {overall, locality, value, legalRisk, livability}
+
+  // Images
+  images          PropertyImage[]
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relations
+  transactions    Transaction[]
+  documents       Document[]      @relation("PropertyDocuments")
+  valuations      Valuation[]
+  verifications   Verification[]  @relation("PropertyVerifications")
+  reports         Report[]        @relation("PropertyReports")
+
+  @@index([locationId])
+  @@index([type, status])
+  @@index([askingPrice])
+  @@index([listedById])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PropertyImage {
+  id          String   @id @default(cuid())
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  url         String   // Cloudinary URL
+  publicId    String   // Cloudinary public ID
+  caption     String?
+  isPrimary   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+
+  // AI analysis
+  aiAnalysis  Json?    // {isAuthentic, features, quality}
+
+  createdAt   DateTime @default(now())
+
+  @@index([propertyId])
+}
+
+// =============================================================================
+// 4. TRANSACTION (Central Entity)
+// =============================================================================
+
+enum TransactionType {
+  BUY
+  SELL
+  RENT
+  LEASE
+}
+
+enum TransactionStatus {
+  DISCOVERY
+  INTEREST
+  EVALUATION
+  NEGOTIATION
+  AGREEMENT
+  DEEP_VERIFY
+  FINANCING
+  REGISTRATION
+  POST_REGISTRATION
+  COMPLETED
+  ABANDONED
+}
+
+model Transaction {
+  id            String            @id @default(cuid())
+  type          TransactionType
+  status        TransactionStatus @default(INTEREST)
+
+  // Parties
+  propertyId    String
+  property      Property          @relation(fields: [propertyId], references: [id])
+  buyerId       String
+  buyer         User              @relation("BuyerTransactions", fields: [buyerId], references: [id])
+  sellerId      String?
+  seller        User?             @relation("SellerTransactions", fields: [sellerId], references: [id])
+
+  // Location context (determines regulations, available services)
+  locationId    String
+  location      Location          @relation(fields: [locationId], references: [id])
+
+  // Lifecycle timestamps
+  initiatedAt   DateTime          @default(now())
+  completedAt   DateTime?
+  abandonedAt   DateTime?
+  abandonReason String?
+
+  // Transaction-type-specific data
+  metadata      Json?             // {agreedPrice, tokenAmount, possessionDate, etc.}
+
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  // Relations
+  serviceRequests ServiceRequest[]
+  documents       Document[]      @relation("TransactionDocuments")
+  payments        Payment[]
+  reports         Report[]        @relation("TransactionReports")
+  negotiations    Negotiation[]
+  valuations      Valuation[]
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([propertyId])
+  @@index([status])
+  @@index([locationId])
+  @@index([createdAt])
+}
+
+// =============================================================================
+// 5. SERVICE CATALOG & REQUESTS
+// =============================================================================
+
+enum ServiceCategory {
+  VERIFICATION
+  LEGAL
+  FINANCE
+  VALUATION
+  ENGINEERING
+  NEGOTIATION
+  GOVERNMENT
+  DOCUMENTATION
+  DISCOVERY
+}
+
+enum ServicePhase {
+  MVP
+  PHASE_2
+  PHASE_3
+  LONG_TERM
+}
+
+model ServiceCatalog {
+  id                String          @id @default(cuid())
+  code              String          @unique // e.g., LEGAL_TITLE_VERIFY
+  name              String
+  description       String
+  category          ServiceCategory
+  phase             ServicePhase    @default(MVP)
+
+  // Applicability
+  applicableStages        TransactionStatus[] // Which lifecycle stages
+  applicablePropertyTypes PropertyType[]       // Which property types (empty = all)
+  applicableTransactionTypes TransactionType[] // BUY, SELL, RENT (empty = all)
+
+  // Service metadata
+  estimatedDurationHours Int?
+  requiresPhysicalPresence Boolean @default(false)
+  requiresGovernmentInteraction Boolean @default(false)
+  aiCapabilitiesUsed     String[]  // Which AI capabilities power this
+
+  // Deliverables description
+  deliverables     Json?   // {items: [{name, description, format}]}
+
+  isActive         Boolean @default(true)
+  sortOrder        Int     @default(0)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  serviceRequests  ServiceRequest[]
+  servicePricings  ServicePricing[]
+
+  @@index([category])
+  @@index([phase])
+  @@index([isActive])
+}
+
+model ServicePricing {
+  id          String         @id @default(cuid())
+  serviceId   String
+  service     ServiceCatalog @relation(fields: [serviceId], references: [id])
+  locationId  String
+  location    Location       @relation(fields: [locationId], references: [id])
+
+  priceType   String         // FIXED, PERCENTAGE, RANGE, QUOTE
+  amount      Float?         // For FIXED
+  minAmount   Float?         // For RANGE
+  maxAmount   Float?         // For RANGE
+  percentage  Float?         // For PERCENTAGE
+  percentageOf String?       // What the percentage is of (e.g., "property_value")
+  currency    String         @default("INR")
+  gstApplicable Boolean     @default(true)
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([serviceId, locationId])
+}
+
+enum ServiceRequestStatus {
+  REQUESTED
+  ACCEPTED
+  IN_PROGRESS
+  PENDING_INPUT
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+model ServiceRequest {
+  id              String               @id @default(cuid())
+  transactionId   String
+  transaction     Transaction          @relation(fields: [transactionId], references: [id])
+  serviceId       String
+  service         ServiceCatalog       @relation(fields: [serviceId], references: [id])
+  providerId      String?
+  provider        ServiceProvider?     @relation(fields: [providerId], references: [id])
+
+  status          ServiceRequestStatus @default(REQUESTED)
+  priority        String               @default("NORMAL") // NORMAL, URGENT
+
+  // Lifecycle
+  requestedAt     DateTime             @default(now())
+  acceptedAt      DateTime?
+  startedAt       DateTime?
+  completedAt     DateTime?
+
+  // Output
+  deliverables    Json?                // Service output data
+  notes           String?              // Provider notes
+  aiAnalysis      Json?                // AI analysis of service result
+
+  // Feedback
+  rating          Int?                 // 1-5
+  review          String?
+
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  // Relations
+  payments        Payment[]
+  documents       Document[]           @relation("ServiceDocuments")
+
+  @@index([transactionId])
+  @@index([serviceId])
+  @@index([providerId])
+  @@index([status])
+}
+
+// =============================================================================
+// 6. SERVICE PROVIDER
+// =============================================================================
+
+enum ServiceProviderType {
+  INDIVIDUAL
+  FIRM
+  BANK
+  GOVERNMENT
+}
+
+model ServiceProvider {
+  id                String              @id @default(cuid())
+  userId            String?             @unique
+  user              User?               @relation(fields: [userId], references: [id])
+  type              ServiceProviderType
+  name              String
+  description       String?
+  specialization    String[]            // Areas of expertise
+
+  // Credentials
+  credentials       Json?               // [{type, number, issuedBy, validUntil}]
+  verificationLevel VerificationLevel   @default(UNVERIFIED)
+
+  // Performance metrics
+  avgRating         Float               @default(0)
+  totalReviews      Int                 @default(0)
+  completionRate    Float               @default(0) // 0-1
+  avgResponseHours  Float?
+
+  // Contact
+  contactEmail      String?
+  contactPhone      String?
+
+  isActive          Boolean             @default(true)
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  // Relations
+  serviceRequests   ServiceRequest[]
+  locations         ServiceProviderLocation[]
+
+  @@index([type])
+  @@index([isActive])
+}
+
+model ServiceProviderLocation {
+  id          String          @id @default(cuid())
+  providerId  String
+  provider    ServiceProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  locationId  String
+  location    Location        @relation(fields: [locationId], references: [id])
+
+  @@unique([providerId, locationId])
+}
+
+// =============================================================================
+// 7. DOCUMENT
+// =============================================================================
+
+enum DocumentType {
+  // Property documents
+  TITLE_DEED
+  SALE_DEED
+  ENCUMBRANCE_CERT
+  KHATA_CERT
+  TAX_RECEIPT
+  RERA_CERT
+  APPROVAL_PLAN
+  COMPLETION_CERT
+  OCCUPANCY_CERT
+  MOTHER_DEED
+  // Transaction documents
+  SALE_AGREEMENT
+  MOU
+  POWER_OF_ATTORNEY
+  TOKEN_RECEIPT
+  // KYC documents
+  AADHAAR
+  PAN
+  PASSPORT
+  VOTER_ID
+  // Finance documents
+  LOAN_SANCTION
+  BANK_STATEMENT
+  INCOME_PROOF
+  // Reports
+  VALUATION_REPORT
+  LEGAL_OPINION
+  INSPECTION_REPORT
+  // Other
+  PHOTOGRAPH
+  OTHER
+}
+
+enum DocumentVerificationStatus {
+  UNVERIFIED
+  AI_REVIEWED
+  HUMAN_VERIFIED
+  REJECTED
+}
+
+model Document {
+  id                String                     @id @default(cuid())
+  type              DocumentType
+  name              String                     // Original filename
+  storageUrl        String                     // Cloudinary URL
+  publicId          String?                    // Cloudinary public ID
+  mimeType          String
+  sizeBytes         Int
+
+  // Ownership
+  uploadedById      String
+  uploadedBy        User                       @relation("UploadedDocuments", fields: [uploadedById], references: [id])
+
+  // Associations (a document can belong to one or more of these)
+  propertyId        String?
+  property          Property?                  @relation("PropertyDocuments", fields: [propertyId], references: [id])
+  transactionId     String?
+  transaction       Transaction?               @relation("TransactionDocuments", fields: [transactionId], references: [id])
+  serviceRequestId  String?
+  serviceRequest    ServiceRequest?            @relation("ServiceDocuments", fields: [serviceRequestId], references: [id])
+
+  // Verification
+  verificationStatus DocumentVerificationStatus @default(UNVERIFIED)
+
+  // AI Analysis
+  aiAnalysis        Json?                      // {extractedFields, riskFlags, completeness, summary}
+  aiAuthenticityScore Float?                   // 0-1 confidence
+
+  // Metadata
+  isSensitive       Boolean                    @default(false) // PII-containing
+  expiresAt         DateTime?
+
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+
+  @@index([propertyId])
+  @@index([transactionId])
+  @@index([serviceRequestId])
+  @@index([uploadedById])
+  @@index([type])
+}
+
+// =============================================================================
+// 8. VERIFICATION
+// =============================================================================
+
+enum VerificationType {
+  IDENTITY
+  OWNERSHIP
+  AUTHENTICITY
+  LEGAL
+  PHYSICAL
+  LOCATION
+  FINANCIAL
+  DOCUMENT
+  LISTING
+}
+
+enum VerificationMethod {
+  AI_AUTOMATED
+  HUMAN_MANUAL
+  THIRD_PARTY
+  GOVERNMENT_API
+}
+
+enum VerificationStatus {
+  PENDING
+  IN_PROGRESS
+  PASSED
+  FAILED
+  INCONCLUSIVE
+}
+
+model Verification {
+  id              String             @id @default(cuid())
+
+  // Polymorphic reference — what is being verified
+  entityType      String             // PROPERTY, DOCUMENT, IMAGE, USER, SERVICE_PROVIDER, LISTING
+  entityId        String
+
+  verificationType VerificationType
+  method          VerificationMethod
+  status          VerificationStatus @default(PENDING)
+
+  result          Json?              // Detailed verification result
+  confidenceScore Float?             // 0-1, for AI verifications
+  evidence        Json?              // Supporting evidence
+  verifiedBy      String?            // AI model name, user ID, or third-party service
+
+  // Optional direct relation to Property (for indexed queries)
+  propertyId      String?
+  property        Property?          @relation("PropertyVerifications", fields: [propertyId], references: [id])
+
+  createdAt       DateTime           @default(now())
+
+  @@index([entityType, entityId])
+  @@index([propertyId])
+  @@index([verificationType])
+  @@index([status])
+}
+
+// =============================================================================
+// 9. VALUATION
+// =============================================================================
+
+enum ValuationType {
+  AI_ESTIMATE
+  MARKET_COMPARISON
+  BANK_VALUATION
+  INDEPENDENT_VALUATION
+}
+
+model Valuation {
+  id            String        @id @default(cuid())
+  type          ValuationType
+
+  propertyId    String
+  property      Property      @relation(fields: [propertyId], references: [id])
+  transactionId String?
+  transaction   Transaction?  @relation(fields: [transactionId], references: [id])
+
+  estimatedValue Json         // {min, max, median, confidence, currency}
+  pricePerSqft   Json?        // {min, max, median}
+  comparables    Json?        // [{propertyId, price, distance, similarity}]
+  methodology    String?
+  dataSources    String[]
+  factors        Json?        // {positive: [], negative: [], neutral: []}
+
+  validUntil     DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([propertyId])
+  @@index([transactionId])
+}
+
+// =============================================================================
+// 10. PAYMENT
+// =============================================================================
+
+enum PaymentType {
+  SERVICE_FEE
+  PLATFORM_FEE
+  REPORT_PURCHASE
+  SUBSCRIPTION
+  REFUND
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  type              PaymentType
+  status            PaymentStatus @default(PENDING)
+
+  // Who and what
+  userId            String
+  user              User          @relation(fields: [userId], references: [id])
+  transactionId     String?
+  transaction       Transaction?  @relation(fields: [transactionId], references: [id])
+  serviceRequestId  String?
+  serviceRequest    ServiceRequest? @relation(fields: [serviceRequestId], references: [id])
+
+  // Amount
+  amount            Float
+  currency          String        @default("INR")
+  gstAmount         Float         @default(0)
+  totalAmount       Float         // amount + gst
+
+  // Gateway
+  paymentGateway    String?       // razorpay
+  gatewayPaymentId  String?       // Razorpay payment ID
+  gatewayOrderId    String?       // Razorpay order ID
+  paymentMethod     String?       // UPI, CARD, NET_BANKING, WALLET
+  receiptUrl        String?
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([transactionId])
+  @@index([serviceRequestId])
+  @@index([status])
+  @@index([gatewayOrderId])
+}
+
+// =============================================================================
+// 11. REPORT
+// =============================================================================
+
+enum ReportType {
+  PROPERTY_EVALUATION
+  LOCALITY_ANALYSIS
+  LEGAL_DUE_DILIGENCE
+  VALUATION
+  MARKET_COMPARISON
+  TRANSACTION_SUMMARY
+}
+
+enum ReportStatus {
+  GENERATING
+  READY
+  FAILED
+}
+
+enum ReportGenerator {
+  AI
+  HUMAN
+  HYBRID
+}
+
+model Report {
+  id              String          @id @default(cuid())
+  type            ReportType
+  status          ReportStatus    @default(GENERATING)
+  generatedBy     ReportGenerator @default(AI)
+
+  // What the report is about (at least one must be set)
+  transactionId   String?
+  transaction     Transaction?    @relation("TransactionReports", fields: [transactionId], references: [id])
+  propertyId      String?
+  property        Property?       @relation("PropertyReports", fields: [propertyId], references: [id])
+  locationId      String?
+  location        Location?       @relation("LocationReports", fields: [locationId], references: [id])
+
+  // Content
+  title           String
+  content         Json            // Structured report content
+  summary         String?         // Brief summary
+  pdfUrl          String?         // Generated PDF URL
+
+  // Purchase info
+  purchasedById   String
+  purchasedBy     User            @relation("PurchasedReports", fields: [purchasedById], references: [id])
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([transactionId])
+  @@index([propertyId])
+  @@index([locationId])
+  @@index([purchasedById])
+  @@index([type])
+}
+
+// =============================================================================
+// 12. NEGOTIATION
+// =============================================================================
+
+enum NegotiationStatus {
+  ACTIVE
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  WITHDRAWN
+}
+
+model Negotiation {
+  id              String            @id @default(cuid())
+  transactionId   String
+  transaction     Transaction       @relation(fields: [transactionId], references: [id])
+  status          NegotiationStatus @default(ACTIVE)
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  offers          NegotiationOffer[]
+
+  @@index([transactionId])
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COUNTERED
+  EXPIRED
+  WITHDRAWN
+}
+
+model NegotiationOffer {
+  id              String       @id @default(cuid())
+  negotiationId   String
+  negotiation     Negotiation  @relation(fields: [negotiationId], references: [id])
+
+  offeredById     String       // User ID of the person making the offer
+  amount          Float
+  terms           Json?        // {paymentTerms, conditions, timeline, inclusions}
+  message         String?      // Personal message with the offer
+  aiRecommendation Json?       // AI analysis of this offer
+
+  status          OfferStatus  @default(PENDING)
+  expiresAt       DateTime?
+  respondedAt     DateTime?
+
+  createdAt       DateTime     @default(now())
+
+  @@index([negotiationId])
+  @@index([offeredById])
+}
+
+// =============================================================================
+// 13. NOTIFICATION
+// =============================================================================
+
+enum NotificationType {
+  TRANSACTION_UPDATE
+  SERVICE_UPDATE
+  NEW_LISTING_MATCH
+  PAYMENT_STATUS
+  DOCUMENT_REVIEW
+  SYSTEM_ALERT
+  PROMOTION
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type        NotificationType
+  title       String
+  message     String
+  actionUrl   String?          // Deep link to relevant page
+  isRead      Boolean          @default(false)
+
+  // Reference to related entity
+  entityType  String?          // TRANSACTION, SERVICE_REQUEST, PROPERTY, etc.
+  entityId    String?
+
+  createdAt   DateTime         @default(now())
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+// =============================================================================
+// 14. SAVED SEARCH
+// =============================================================================
+
+model SavedSearch {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String?  // User-given name for this search
+  filters     Json     // {propertyType, locationIds, priceMin, priceMax, bedrooms, etc.}
+  notifyOnMatch Boolean @default(true)
+  lastNotified DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// =============================================================================
+// 15. AI CONVERSATION (for AI Advisor)
+// =============================================================================
+
+model AIConversation {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title       String?  // Auto-generated title
+  messages    Json[]   // [{role: "user"|"assistant", content, timestamp}]
+  context     Json?    // {locationId, propertyId, transactionId} — what the conversation is about
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// =============================================================================
+// 16. AUDIT EVENT (Immutable Log)
+// =============================================================================
+
+model AuditEvent {
+  id          String   @id @default(cuid())
+
+  entityType  String   // TRANSACTION, PROPERTY, DOCUMENT, SERVICE_REQUEST, etc.
+  entityId    String
+  action      String   // CREATED, UPDATED, STATUS_CHANGED, VIEWED, DOWNLOADED, etc.
+
+  actorId     String?
+  actor       User?    @relation("ActorEvents", fields: [actorId], references: [id])
+  actorType   String   @default("USER") // USER, ADMIN, SYSTEM, AI
+
+  beforeState Json?    // State before the action
+  afterState  Json?    // State after the action
+  metadata    Json?    // Additional context
+  ipAddress   String?
+
+  createdAt   DateTime @default(now()) // Immutable — no updatedAt
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+}
