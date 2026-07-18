@@ -1,592 +1,444 @@
 /**
  * BuyWise — Service Catalog Configuration
  * 
- * Master list of all platform services with phase classification,
- * dependencies, and metadata. This seeds the ServiceCatalog table.
+ * Reorganized Service Framework Configuration
+ * Drives the generic execution pipeline.
  */
 
-export interface ServiceCatalogSeed {
-  code: string;
-  name: string;
-  description: string;
-  category: string;
-  phase: string;
-  applicableStages: string[];
-  applicablePropertyTypes: string[];
-  applicableTransactionTypes: string[];
-  estimatedDurationHours: number | null;
-  requiresPhysicalPresence: boolean;
-  requiresGovernmentInteraction: boolean;
-  aiCapabilitiesUsed: string[];
-  deliverables: { items: { name: string; description: string; format: string }[] };
-  defaultPriceINR: number | null;
-  priceType: string;
-}
-
-export const serviceCatalog: ServiceCatalogSeed[] = [
+export const serviceCatalog = [
   // =====================================================================
-  // DISCOVERY SERVICES
+  // PHASE 1: AUTOMATED VERIFICATION
   // =====================================================================
   {
-    code: 'DISC_LOCALITY_ANALYSIS',
-    name: 'Locality Analysis',
-    description: 'AI-powered analysis of a Bengaluru locality covering growth potential, livability, connectivity, and investment outlook.',
-    category: 'DISCOVERY',
-    phase: 'MVP',
-    applicableStages: ['DISCOVERY', 'INTEREST', 'EVALUATION'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: ['BUY'],
-    estimatedDurationHours: null,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: ['ContentAI', 'ValuationAI'],
-    deliverables: {
-      items: [
-        { name: 'Locality Score Card', description: 'Growth, livability, connectivity, affordability, infrastructure scores', format: 'JSON' },
-        { name: 'AI Insight Summary', description: 'AI-generated narrative about the locality', format: 'TEXT' },
-      ],
-    },
-    defaultPriceINR: 0,
-    priceType: 'FIXED',
-  },
-  {
-    code: 'DISC_COMMUTE_ANALYSIS',
-    name: 'Commute Analysis',
-    description: 'Calculate commute time and distance from a property or locality to your workplace and key destinations.',
-    category: 'DISCOVERY',
-    phase: 'MVP',
-    applicableStages: ['DISCOVERY', 'INTEREST', 'EVALUATION'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: [],
-    estimatedDurationHours: null,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: [],
-    deliverables: {
-      items: [
-        { name: 'Commute Report', description: 'Drive and transit times to specified destinations', format: 'JSON' },
-      ],
-    },
-    defaultPriceINR: 0,
-    priceType: 'FIXED',
-  },
-
-  // =====================================================================
-  // VALUATION SERVICES
-  // =====================================================================
-  {
-    code: 'VAL_PROPERTY_EVALUATION',
-    name: 'Property Evaluation Report',
-    description: 'Comprehensive AI-generated property evaluation including fair market value estimate, locality deep-dive, commute analysis, price trends, and risk flags.',
-    category: 'VALUATION',
-    phase: 'MVP',
-    applicableStages: ['INTEREST', 'EVALUATION'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: ['BUY'],
-    estimatedDurationHours: 1,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: ['ValuationAI', 'ContentAI', 'RiskAI'],
-    deliverables: {
-      items: [
-        { name: 'Evaluation Report', description: 'Full property evaluation with AI insights', format: 'PDF' },
-        { name: 'Valuation Estimate', description: 'Fair market value range with confidence interval', format: 'JSON' },
-        { name: 'Risk Assessment', description: 'Identified risk flags and recommendations', format: 'JSON' },
-      ],
-    },
-    defaultPriceINR: 499,
-    priceType: 'FIXED',
-  },
-  {
-    code: 'VAL_MARKET_COMPARISON',
-    name: 'Market Comparison Report',
-    description: 'Compare property pricing against recent sales and listings in the same locality. Includes price per sq ft analysis and trend data.',
-    category: 'VALUATION',
-    phase: 'MVP',
-    applicableStages: ['INTEREST', 'EVALUATION', 'NEGOTIATION'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: ['BUY', 'SELL'],
-    estimatedDurationHours: null,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: ['ValuationAI'],
-    deliverables: {
-      items: [
-        { name: 'Market Comparison', description: 'Comparable properties with pricing analysis', format: 'JSON' },
-      ],
-    },
-    defaultPriceINR: 0,
-    priceType: 'FIXED',
-  },
-  {
-    code: 'VAL_DETAILED_REPORT',
-    name: 'Detailed Valuation Report',
-    description: 'In-depth property valuation combining AI analysis, market data, and expert methodology. Includes comparables, adjustments, and confidence scoring.',
-    category: 'VALUATION',
-    phase: 'PHASE_2',
-    applicableStages: ['EVALUATION', 'NEGOTIATION', 'FINANCING'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: ['BUY', 'SELL'],
-    estimatedDurationHours: 24,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: ['ValuationAI', 'ContentAI', 'DataExtractionAI'],
-    deliverables: {
-      items: [
-        { name: 'Detailed Valuation', description: 'Comprehensive valuation with methodology', format: 'PDF' },
-      ],
-    },
-    defaultPriceINR: 1999,
-    priceType: 'FIXED',
-  },
-  {
-    code: 'VAL_INDEPENDENT',
-    name: 'Independent Property Valuation',
-    description: 'Valuation by a RICS/IBBI-registered professional valuer. Official valuation report accepted by banks and courts.',
-    category: 'VALUATION',
-    phase: 'PHASE_3',
-    applicableStages: ['EVALUATION', 'FINANCING'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: ['BUY', 'SELL'],
-    estimatedDurationHours: 72,
-    requiresPhysicalPresence: true,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: [],
-    deliverables: {
-      items: [
-        { name: 'Official Valuation Report', description: 'Certified valuation from registered valuer', format: 'PDF' },
-      ],
-    },
-    defaultPriceINR: 5000,
-    priceType: 'RANGE',
-  },
-
-  // =====================================================================
-  // VERIFICATION SERVICES
-  // =====================================================================
-  {
-    code: 'VER_LISTING_BASIC',
-    name: 'Basic Listing Verification',
-    description: 'Admin-level review of listing details for obvious red flags such as impossible pricing, stolen images, or inconsistent information.',
-    category: 'VERIFICATION',
-    phase: 'MVP',
-    applicableStages: ['INTEREST'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: [],
-    estimatedDurationHours: 2,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: ['FraudAI'],
-    deliverables: {
-      items: [
-        { name: 'Verification Badge', description: 'Basic verified status on listing', format: 'STATUS' },
-      ],
-    },
-    defaultPriceINR: 0,
-    priceType: 'FIXED',
-  },
-  {
-    code: 'VER_DOCUMENT',
+    code: 'VER_PROPERTY_DOCUMENT',
     name: 'Property Document Verification',
     description: 'AI-powered scan of uploaded property documents for completeness, consistency, and known red flags. Not a legal opinion.',
-    category: 'VERIFICATION',
+    category: 'AUTOMATED_VERIFICATION',
     phase: 'MVP',
-    applicableStages: ['EVALUATION', 'DEEP_VERIFY'],
+    isAiSupported: true,
+    isHumanPartnerRequired: false,
+    partnerType: null,
+    requiresGovernmentInteraction: false,
+    
+    questionnaireSchema: {
+      title: "Property Document Setup",
+      fields: [
+        { name: "documentType", label: "Primary Document Type", type: "select", options: ["Sale Deed", "Allotment Letter", "Agreement to Sell"] },
+        { name: "propertyAgeYears", label: "Approximate Property Age (Years)", type: "number" }
+      ]
+    },
+    requiredDocuments: ["PRIMARY_DEED", "ID_PROOF"],
+    optionalDocuments: ["PREVIOUS_DEEDS"],
+    deliverablesSchema: {
+      type: "AI_DOCUMENT_REPORT",
+      sections: ["Completeness Score", "Extracted Entities", "Missing Documents", "Detected Risks"]
+    },
+    completionCriteria: "AI pipeline completes OCR and Risk Engine execution with confidence score > 0.8.",
+    recommendedNextServices: ['VER_OWNERSHIP', 'VAL_PROPERTY_EVALUATION'],
+    workflowOverrides: { skipAdmin: true, skipPartner: true },
+    
+    applicableStages: ['DISCOVERY', 'INTEREST', 'EVALUATION'],
     applicablePropertyTypes: [],
     applicableTransactionTypes: ['BUY'],
     estimatedDurationHours: 1,
     requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: ['DocumentAI'],
+    aiCapabilitiesUsed: ['DocumentAI', 'OCR', 'EntityExtraction'],
     deliverables: {
       items: [
         { name: 'Document Review Report', description: 'Completeness check, field extraction, risk flags', format: 'JSON' },
       ],
     },
-    defaultPriceINR: 299,
-    priceType: 'FIXED',
   },
-  {
-    code: 'VER_GPS_LOCATION',
-    name: 'GPS Location Verification',
-    description: 'Verify that property images were captured at the claimed location by analyzing EXIF data or live GPS coordinates.',
-    category: 'VERIFICATION',
-    phase: 'PHASE_2',
-    applicableStages: ['EVALUATION'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: ['BUY'],
-    estimatedDurationHours: null,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: ['ImageAI'],
-    deliverables: {
-      items: [
-        { name: 'Location Match Report', description: 'GPS coordinates vs claimed location analysis', format: 'JSON' },
-      ],
-    },
-    defaultPriceINR: 99,
-    priceType: 'FIXED',
-  },
-  {
-    code: 'VER_IMAGE_AUTH',
-    name: 'Image Authenticity Verification',
-    description: 'AI analysis to detect manipulated images, stock photos, or images stolen from other listings.',
-    category: 'VERIFICATION',
-    phase: 'PHASE_2',
-    applicableStages: ['INTEREST', 'EVALUATION'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: ['BUY'],
-    estimatedDurationHours: null,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: ['ImageAI', 'FraudAI'],
-    deliverables: {
-      items: [
-        { name: 'Image Authenticity Report', description: 'Manipulation detection and reverse image search results', format: 'JSON' },
-      ],
-    },
-    defaultPriceINR: 199,
-    priceType: 'FIXED',
-  },
+
+  // =====================================================================
+  // PHASE 2: PROFESSIONAL EXPERT
+  // =====================================================================
   {
     code: 'VER_OWNERSHIP',
     name: 'Ownership Verification',
-    description: 'Verify property ownership using available government land records. Subject to data availability per state.',
-    category: 'VERIFICATION',
+    description: 'Uses extracted document info from Phase 1 and validates against government records to confirm current legal ownership.',
+    category: 'PROFESSIONAL_EXPERT',
     phase: 'PHASE_2',
-    applicableStages: ['EVALUATION', 'DEEP_VERIFY'],
+    isAiSupported: true,
+    isHumanPartnerRequired: true,
+    partnerType: 'LAWYER',
+    requiresGovernmentInteraction: true,
+    
+    questionnaireSchema: {
+      title: "Ownership Details",
+      fields: [
+        { name: "surveyNumber", label: "Survey/Khata Number", type: "text" },
+        { name: "village", label: "Village/Hobli", type: "text" }
+      ]
+    },
+    requiredDocuments: ["PRIMARY_DEED", "LATEST_TAX_RECEIPT"],
+    optionalDocuments: ["ENCUMBRANCE_CERTIFICATE"],
+    deliverablesSchema: {
+      type: "EXPERT_REPORT",
+      sections: ["Government Record Match", "Ownership Chain", "Discrepancies", "Lawyer Conclusion"]
+    },
+    completionCriteria: "Partner uploads verified Ownership Report.",
+    recommendedNextServices: ['VER_TITLE', 'DRAFT_SALE_AGREEMENT'],
+    workflowOverrides: {},
+    
+    applicableStages: ['EVALUATION', 'NEGOTIATION'],
     applicablePropertyTypes: [],
     applicableTransactionTypes: ['BUY'],
     estimatedDurationHours: 48,
     requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: true,
-    aiCapabilitiesUsed: ['DocumentAI', 'DataExtractionAI'],
+    aiCapabilitiesUsed: ['RecordMatchAI'],
     deliverables: {
       items: [
-        { name: 'Ownership Verification Report', description: 'Name match, survey number, extent verification', format: 'PDF' },
+        { name: 'Ownership Report', description: 'Validation against state registries', format: 'PDF' },
       ],
     },
-    defaultPriceINR: 999,
-    priceType: 'FIXED',
   },
 
   // =====================================================================
-  // LEGAL SERVICES
+  // PHASE 3: PROFESSIONAL EXPERT
   // =====================================================================
   {
-    code: 'LEGAL_TITLE_VERIFY',
-    name: 'Title Verification',
-    description: 'Professional title search and verification by a partner lawyer. Covers 30-year title chain, encumbrances, and legal opinion.',
-    category: 'LEGAL',
-    phase: 'MVP',
-    applicableStages: ['EVALUATION', 'DEEP_VERIFY'],
+    code: 'VER_TITLE',
+    name: 'Title Verification (30-Year)',
+    description: 'Comprehensive 30-year title chain analysis by a verified real estate lawyer, including encumbrance verification and legal opinion.',
+    category: 'PROFESSIONAL_EXPERT',
+    phase: 'PHASE_3',
+    isAiSupported: false,
+    isHumanPartnerRequired: true,
+    partnerType: 'LAWYER',
+    requiresGovernmentInteraction: true,
+    
+    questionnaireSchema: {
+      title: "Title Verification Context",
+      fields: [
+        { name: "knownDisputes", label: "Are there any known disputes?", type: "boolean" },
+        { name: "loanIntended", label: "Are you planning to take a bank loan?", type: "boolean" }
+      ]
+    },
+    requiredDocuments: ["PRIMARY_DEED", "MOTHER_DEED", "ENCUMBRANCE_CERTIFICATE_15_YEARS"],
+    optionalDocuments: ["KHATA_EXTRACT", "APPROVED_PLAN"],
+    deliverablesSchema: {
+      type: "LEGAL_OPINION",
+      sections: ["Flow of Title", "Encumbrances", "Litigation Check", "Final Legal Opinion"]
+    },
+    completionCriteria: "Lawyer uploads digitally signed Legal Opinion.",
+    recommendedNextServices: ['SCORE_READINESS', 'DRAFT_SALE_AGREEMENT'],
+    workflowOverrides: {},
+    
+    applicableStages: ['EVALUATION', 'FINANCING'],
     applicablePropertyTypes: [],
     applicableTransactionTypes: ['BUY'],
     estimatedDurationHours: 120,
     requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: true,
-    aiCapabilitiesUsed: ['DocumentAI'],
-    deliverables: {
-      items: [
-        { name: 'Title Search Report', description: 'Chain of title for last 30 years', format: 'PDF' },
-        { name: 'Legal Opinion', description: "Lawyer's opinion on title validity", format: 'PDF' },
-        { name: 'Encumbrance Summary', description: 'Existing encumbrances, mortgages, liens', format: 'PDF' },
-      ],
-    },
-    defaultPriceINR: 4999,
-    priceType: 'RANGE',
-  },
-  {
-    code: 'LEGAL_CONSULTATION',
-    name: 'Legal Consultation',
-    description: 'One-on-one consultation with a property lawyer. Video call or in-person. 30 minutes.',
-    category: 'LEGAL',
-    phase: 'PHASE_2',
-    applicableStages: ['EVALUATION', 'NEGOTIATION', 'AGREEMENT', 'DEEP_VERIFY', 'REGISTRATION'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: [],
-    estimatedDurationHours: 1,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
     aiCapabilitiesUsed: [],
     deliverables: {
       items: [
-        { name: 'Consultation Summary', description: 'Notes and recommendations from the lawyer', format: 'TEXT' },
+        { name: 'Title Search Report', description: '30-year flow of title', format: 'PDF' },
+        { name: 'Legal Opinion', description: 'Signed opinion from empanelled lawyer', format: 'PDF' },
       ],
     },
-    defaultPriceINR: 999,
-    priceType: 'FIXED',
   },
+
+  // =====================================================================
+  // PHASE 4: AI INSTANT
+  // =====================================================================
   {
-    code: 'LEGAL_AGREEMENT_DRAFT',
+    code: 'SCORE_READINESS',
+    name: 'Property Readiness Score',
+    description: 'Aggregates outputs from Document, Ownership, and Title verifications to generate a dynamic 0-100 confidence score.',
+    category: 'AI_INSTANT',
+    phase: 'PHASE_4',
+    isAiSupported: true,
+    isHumanPartnerRequired: false,
+    partnerType: null,
+    requiresGovernmentInteraction: false,
+    
+    questionnaireSchema: null,
+    requiredDocuments: [],
+    optionalDocuments: [],
+    deliverablesSchema: {
+      type: "READINESS_SCORE",
+      sections: ["Overall Score", "Missing Critical Services", "Action Items"]
+    },
+    completionCriteria: "Rule engine calculates score instantly.",
+    recommendedNextServices: ['DRAFT_SALE_AGREEMENT'],
+    workflowOverrides: { skipPayment: true, skipAdmin: true, skipPartner: true },
+    
+    applicableStages: ['EVALUATION', 'NEGOTIATION'],
+    applicablePropertyTypes: [],
+    applicableTransactionTypes: ['BUY', 'SELL'],
+    estimatedDurationHours: 0,
+    requiresPhysicalPresence: false,
+    aiCapabilitiesUsed: ['ScoringEngine'],
+    deliverables: {
+      items: [
+        { name: 'Readiness Dashboard', description: 'Dynamic score and missing items', format: 'UI' },
+      ],
+    },
+  },
+
+  // =====================================================================
+  // PHASE 5: PROFESSIONAL EXPERT
+  // =====================================================================
+  {
+    code: 'DRAFT_SALE_AGREEMENT',
     name: 'Sale Agreement Drafting',
-    description: 'Professional drafting of sale agreement with standard clauses and customization for your transaction.',
-    category: 'LEGAL',
-    phase: 'PHASE_2',
-    applicableStages: ['AGREEMENT'],
+    description: 'Uses verified ownership data to auto-fill agreement templates, reviewed and finalized by a lawyer.',
+    category: 'PROFESSIONAL_EXPERT',
+    phase: 'PHASE_5',
+    isAiSupported: true,
+    isHumanPartnerRequired: true,
+    partnerType: 'LAWYER',
+    requiresGovernmentInteraction: false,
+    
+    questionnaireSchema: {
+      title: "Agreement Terms",
+      fields: [
+        { name: "saleConsideration", label: "Total Sale Value", type: "number" },
+        { name: "tokenAmount", label: "Token/Advance Paid", type: "number" },
+        { name: "timeForRegistration", label: "Time for Registration (Days)", type: "number" }
+      ]
+    },
+    requiredDocuments: ["BUYER_ID", "SELLER_ID"],
+    optionalDocuments: [],
+    deliverablesSchema: {
+      type: "DOCUMENT_DRAFT",
+      sections: ["Draft Agreement", "Review Comments"]
+    },
+    completionCriteria: "Lawyer uploads final draft.",
+    recommendedNextServices: ['GOV_REGISTRATION_SUPPORT'],
+    workflowOverrides: {},
+    
+    applicableStages: ['NEGOTIATION', 'AGREEMENT'],
     applicablePropertyTypes: [],
     applicableTransactionTypes: ['BUY', 'SELL'],
     estimatedDurationHours: 48,
     requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: ['ContentAI'],
+    aiCapabilitiesUsed: ['DraftingAI'],
     deliverables: {
       items: [
-        { name: 'Sale Agreement Draft', description: 'Customized sale agreement document', format: 'PDF' },
+        { name: 'Draft Agreement to Sell', description: 'Ready to sign draft', format: 'PDF' },
       ],
     },
-    defaultPriceINR: 2999,
-    priceType: 'FIXED',
   },
+
+  // =====================================================================
+  // PHASE 6: GOVERNMENT ASSISTANCE
+  // =====================================================================
   {
-    code: 'LEGAL_REG_SUPPORT',
+    code: 'GOV_REGISTRATION_SUPPORT',
     name: 'Registration Support',
-    description: 'Lawyer accompanies buyer and seller to the Sub-Registrar office for document execution and registration.',
-    category: 'LEGAL',
-    phase: 'PHASE_2',
-    applicableStages: ['REGISTRATION'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: ['BUY', 'SELL'],
-    estimatedDurationHours: 8,
-    requiresPhysicalPresence: true,
+    description: 'Guided physical registration workflow at the Sub-Registrar office.',
+    category: 'GOVERNMENT_ASSISTANCE',
+    phase: 'PHASE_6',
+    isAiSupported: false,
+    isHumanPartnerRequired: true,
+    partnerType: 'FIELD_AGENT',
     requiresGovernmentInteraction: true,
-    aiCapabilitiesUsed: [],
-    deliverables: {
-      items: [
-        { name: 'Registration Confirmation', description: 'Confirmation that registration is completed', format: 'STATUS' },
-      ],
+    
+    questionnaireSchema: {
+      title: "Registration Setup",
+      fields: [
+        { name: "preferredDate", label: "Preferred Registration Date", type: "date" },
+        { name: "sroOffice", label: "Sub-Registrar Office", type: "text" }
+      ]
     },
-    defaultPriceINR: 3999,
-    priceType: 'FIXED',
-  },
-
-  // =====================================================================
-  // DOCUMENTATION SERVICES
-  // =====================================================================
-  {
-    code: 'DOC_CHECKLIST',
-    name: 'Document Checklist',
-    description: 'Auto-generated checklist of required documents based on your property type, transaction type, and location.',
-    category: 'DOCUMENTATION',
-    phase: 'MVP',
-    applicableStages: ['EVALUATION', 'AGREEMENT', 'DEEP_VERIFY', 'REGISTRATION'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: [],
-    estimatedDurationHours: null,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: [],
-    deliverables: {
-      items: [
-        { name: 'Document Checklist', description: 'Required and optional documents with descriptions', format: 'JSON' },
-      ],
+    requiredDocuments: ["SIGNED_SALE_AGREEMENT", "DD_FOR_STAMP_DUTY"],
+    optionalDocuments: [],
+    deliverablesSchema: {
+      type: "REGISTRATION_CONFIRMATION",
+      sections: ["Receipt Number", "Registration Number", "Registered Document Copy"]
     },
-    defaultPriceINR: 0,
-    priceType: 'FIXED',
-  },
-  {
-    code: 'DOC_AI_REVIEW',
-    name: 'AI Document Review',
-    description: 'Upload a property document and get an instant AI review for completeness, consistency, and potential red flags.',
-    category: 'DOCUMENTATION',
-    phase: 'MVP',
-    applicableStages: ['EVALUATION', 'DEEP_VERIFY'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: ['BUY'],
-    estimatedDurationHours: null,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: ['DocumentAI'],
-    deliverables: {
-      items: [
-        { name: 'AI Review Report', description: 'Completeness score, extracted fields, risk flags', format: 'JSON' },
-      ],
-    },
-    defaultPriceINR: 0,
-    priceType: 'FIXED',
-  },
-
-  // =====================================================================
-  // FINANCE SERVICES
-  // =====================================================================
-  {
-    code: 'FIN_EMI_CALC',
-    name: 'EMI Calculator',
-    description: 'Calculate monthly EMI for a home loan based on loan amount, interest rate, and tenure.',
-    category: 'FINANCE',
-    phase: 'MVP',
-    applicableStages: ['DISCOVERY', 'INTEREST', 'EVALUATION', 'FINANCING'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: ['BUY'],
-    estimatedDurationHours: null,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: [],
-    deliverables: {
-      items: [
-        { name: 'EMI Breakdown', description: 'Monthly EMI, total interest, amortization schedule', format: 'JSON' },
-      ],
-    },
-    defaultPriceINR: 0,
-    priceType: 'FIXED',
-  },
-  {
-    code: 'FIN_LOAN_ELIGIBILITY',
-    name: 'Loan Eligibility Estimator',
-    description: 'Estimate your home loan eligibility based on income, existing obligations, and age.',
-    category: 'FINANCE',
-    phase: 'MVP',
-    applicableStages: ['DISCOVERY', 'INTEREST', 'EVALUATION', 'FINANCING'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: ['BUY'],
-    estimatedDurationHours: null,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: [],
-    deliverables: {
-      items: [
-        { name: 'Eligibility Report', description: 'Estimated loan amount, suggested tenure, income requirements', format: 'JSON' },
-      ],
-    },
-    defaultPriceINR: 0,
-    priceType: 'FIXED',
-  },
-  {
-    code: 'FIN_STAMP_DUTY_CALC',
-    name: 'Stamp Duty Calculator',
-    description: 'Calculate stamp duty and registration fees based on property value, location, and buyer details.',
-    category: 'FINANCE',
-    phase: 'MVP',
-    applicableStages: ['EVALUATION', 'AGREEMENT', 'REGISTRATION'],
-    applicablePropertyTypes: [],
-    applicableTransactionTypes: ['BUY'],
-    estimatedDurationHours: null,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: [],
-    deliverables: {
-      items: [
-        { name: 'Fee Breakdown', description: 'Stamp duty, registration fee, cess, total', format: 'JSON' },
-      ],
-    },
-    defaultPriceINR: 0,
-    priceType: 'FIXED',
-  },
-
-  // =====================================================================
-  // GOVERNMENT SERVICES (Phase 2+)
-  // =====================================================================
-  {
-    code: 'GOV_REG_GUIDE',
-    name: 'Registration Process Guide',
-    description: 'Step-by-step guide for registering your property at the Sub-Registrar office. Location-specific.',
-    category: 'GOVERNMENT',
-    phase: 'PHASE_2',
+    completionCriteria: "Agent uploads scanned copy of Registered Sale Deed.",
+    recommendedNextServices: ['GOV_KHATA_TRANSFER'],
+    workflowOverrides: {},
+    
     applicableStages: ['REGISTRATION'],
     applicablePropertyTypes: [],
-    applicableTransactionTypes: ['BUY', 'SELL'],
-    estimatedDurationHours: null,
-    requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: ['ContentAI'],
+    applicableTransactionTypes: ['BUY'],
+    estimatedDurationHours: 24,
+    requiresPhysicalPresence: true,
+    aiCapabilitiesUsed: [],
     deliverables: {
       items: [
-        { name: 'Registration Guide', description: 'Steps, documents, fees, office details', format: 'JSON' },
+        { name: 'Registered Sale Deed', description: 'Scanned registered document', format: 'PDF' },
       ],
     },
-    defaultPriceINR: 0,
-    priceType: 'FIXED',
   },
+
+  // =====================================================================
+  // PHASE 7: GOVERNMENT ASSISTANCE
+  // =====================================================================
   {
     code: 'GOV_KHATA_TRANSFER',
-    name: 'Khata Transfer Workflow',
-    description: 'Guided workflow for transferring Khata to your name after property registration. Includes document templates and checklists.',
-    category: 'GOVERNMENT',
-    phase: 'PHASE_3',
+    name: 'Khata Transfer',
+    description: 'Post-registration bureaucratic workflow to transfer municipal records to the new buyer.',
+    category: 'GOVERNMENT_ASSISTANCE',
+    phase: 'PHASE_7',
+    isAiSupported: false,
+    isHumanPartnerRequired: true,
+    partnerType: 'FIELD_AGENT',
+    requiresGovernmentInteraction: true,
+    
+    questionnaireSchema: {
+      title: "Khata Transfer Request",
+      fields: [
+        { name: "sakalaNumber", label: "Sakala/Application Reference (if any)", type: "text" }
+      ]
+    },
+    requiredDocuments: ["REGISTERED_SALE_DEED", "ENCUMBRANCE_CERTIFICATE_POST_REGISTRATION", "TAX_RECEIPT"],
+    optionalDocuments: [],
+    deliverablesSchema: {
+      type: "KHATA_CERTIFICATE",
+      sections: ["Khata Extract", "Khata Certificate", "PID Number"]
+    },
+    completionCriteria: "Agent uploads new Khata Certificate.",
+    recommendedNextServices: [],
+    workflowOverrides: {},
+    
     applicableStages: ['POST_REGISTRATION'],
     applicablePropertyTypes: [],
     applicableTransactionTypes: ['BUY'],
-    estimatedDurationHours: 168,
-    requiresPhysicalPresence: true,
-    requiresGovernmentInteraction: true,
-    aiCapabilitiesUsed: ['ContentAI'],
+    estimatedDurationHours: 720, // 30 days
+    requiresPhysicalPresence: false,
+    aiCapabilitiesUsed: [],
     deliverables: {
       items: [
-        { name: 'Khata Transfer Guide', description: 'Step-by-step process with templates', format: 'PDF' },
+        { name: 'Khata Certificate', description: 'Updated municipal record', format: 'PDF' },
       ],
     },
-    defaultPriceINR: 1999,
-    priceType: 'FIXED',
   },
 
   // =====================================================================
-  // NEGOTIATION SERVICES (Phase 2+)
+  // PHASE 8: PROFESSIONAL EXPERT / AI
   // =====================================================================
   {
-    code: 'NEG_AI_OFFER',
-    name: 'AI Offer Recommendation',
-    description: 'AI analyzes market data, property condition, and comparable sales to suggest an optimal offer price and negotiation strategy.',
-    category: 'NEGOTIATION',
-    phase: 'PHASE_2',
-    applicableStages: ['NEGOTIATION'],
+    code: 'FIN_LOAN_ASSISTANCE',
+    name: 'Loan Assistance',
+    description: 'Routes verified property data to banking partners for pre-approval and processing.',
+    category: 'PROFESSIONAL_EXPERT',
+    phase: 'PHASE_8',
+    isAiSupported: true,
+    isHumanPartnerRequired: true,
+    partnerType: 'FINANCIAL_ADVISOR',
+    requiresGovernmentInteraction: false,
+    
+    questionnaireSchema: {
+      title: "Loan Requirements",
+      fields: [
+        { name: "loanAmount", label: "Required Loan Amount", type: "number" },
+        { name: "employmentType", label: "Employment Type", type: "select", options: ["Salaried", "Self-Employed"] }
+      ]
+    },
+    requiredDocuments: ["INCOME_PROOF", "BANK_STATEMENTS", "ITR"],
+    optionalDocuments: [],
+    deliverablesSchema: {
+      type: "LOAN_SANCTION",
+      sections: ["Sanction Letter", "Bank Name", "Interest Rate"]
+    },
+    completionCriteria: "Advisor uploads Sanction Letter.",
+    recommendedNextServices: [],
+    workflowOverrides: {},
+    
+    applicableStages: ['FINANCING'],
     applicablePropertyTypes: [],
     applicableTransactionTypes: ['BUY'],
-    estimatedDurationHours: null,
+    estimatedDurationHours: 168, // 7 days
     requiresPhysicalPresence: false,
-    requiresGovernmentInteraction: false,
-    aiCapabilitiesUsed: ['NegotiationAI', 'ValuationAI'],
+    aiCapabilitiesUsed: ['EligibilityEngine'],
     deliverables: {
       items: [
-        { name: 'Offer Strategy', description: 'Recommended offer amount, range, and reasoning', format: 'JSON' },
+        { name: 'Sanction Letter', description: 'Bank approval document', format: 'PDF' },
       ],
     },
-    defaultPriceINR: 299,
-    priceType: 'FIXED',
   },
 
   // =====================================================================
-  // ENGINEERING SERVICES (Phase 3+)
+  // PHASE 9: PROFESSIONAL EXPERT
   // =====================================================================
   {
-    code: 'ENG_STRUCTURAL',
+    code: 'INSP_STRUCTURAL',
     name: 'Structural Inspection',
-    description: 'Licensed structural engineer inspects the property for structural integrity, construction quality, and safety issues.',
-    category: 'ENGINEERING',
-    phase: 'PHASE_3',
-    applicableStages: ['EVALUATION', 'DEEP_VERIFY'],
-    applicablePropertyTypes: ['APARTMENT', 'VILLA', 'INDEPENDENT_HOUSE', 'COMMERCIAL_SHOP', 'COMMERCIAL_OFFICE'],
+    description: 'Physical inspection by a civil engineer to assess construction quality and structural integrity.',
+    category: 'PROFESSIONAL_EXPERT',
+    phase: 'PHASE_9',
+    isAiSupported: false,
+    isHumanPartnerRequired: true,
+    partnerType: 'SURVEYOR',
+    requiresGovernmentInteraction: false,
+    
+    questionnaireSchema: {
+      title: "Inspection Details",
+      fields: [
+        { name: "contactPersonName", label: "Site Contact Person", type: "text" },
+        { name: "contactPersonPhone", label: "Site Contact Phone", type: "text" }
+      ]
+    },
+    requiredDocuments: [],
+    optionalDocuments: ["APPROVED_PLAN"],
+    deliverablesSchema: {
+      type: "INSPECTION_REPORT",
+      sections: ["Structural Health", "Seepage Issues", "Deviation from Plan", "Remediation Cost Estimate"]
+    },
+    completionCriteria: "Surveyor uploads completed inspection report.",
+    recommendedNextServices: ['VAL_PROPERTY_EVALUATION'],
+    workflowOverrides: {},
+    
+    applicableStages: ['EVALUATION'],
+    applicablePropertyTypes: [],
     applicableTransactionTypes: ['BUY'],
     estimatedDurationHours: 48,
     requiresPhysicalPresence: true,
-    requiresGovernmentInteraction: false,
     aiCapabilitiesUsed: [],
     deliverables: {
       items: [
-        { name: 'Structural Inspection Report', description: 'Detailed assessment of structural condition', format: 'PDF' },
+        { name: 'Inspection Report', description: 'Detailed civil engineering report', format: 'PDF' },
       ],
     },
-    defaultPriceINR: 5000,
-    priceType: 'RANGE',
   },
+
+  // =====================================================================
+  // PHASE 10: AI INSTANT
+  // =====================================================================
   {
-    code: 'ENG_SOIL_TEST',
-    name: 'Soil Testing',
-    description: 'Certified soil testing for plot purchases. Evaluates soil bearing capacity, water table, and suitability for construction.',
-    category: 'ENGINEERING',
-    phase: 'PHASE_3',
-    applicableStages: ['EVALUATION', 'DEEP_VERIFY'],
-    applicablePropertyTypes: ['PLOT', 'AGRICULTURAL_LAND'],
-    applicableTransactionTypes: ['BUY'],
-    estimatedDurationHours: 168,
-    requiresPhysicalPresence: true,
+    code: 'TOOL_EMI_CALC',
+    name: 'EMI Calculator',
+    description: 'Instant AI calculator for loan EMIs.',
+    category: 'AI_INSTANT',
+    phase: 'MVP',
+    isAiSupported: true,
+    isHumanPartnerRequired: false,
+    partnerType: null,
     requiresGovernmentInteraction: false,
+    
+    questionnaireSchema: {
+      title: "EMI Input",
+      fields: [
+        { name: "principal", label: "Loan Amount", type: "number" },
+        { name: "interest", label: "Interest Rate (%)", type: "number" },
+        { name: "tenure", label: "Tenure (Years)", type: "number" }
+      ]
+    },
+    requiredDocuments: [],
+    optionalDocuments: [],
+    deliverablesSchema: {
+      type: "CALCULATOR_RESULT",
+      sections: ["Monthly EMI", "Total Interest", "Total Payment"]
+    },
+    completionCriteria: "Instant.",
+    recommendedNextServices: ['FIN_LOAN_ASSISTANCE'],
+    workflowOverrides: { skipPayment: true, skipAdmin: true, skipPartner: true },
+    
+    applicableStages: ['DISCOVERY', 'FINANCING'],
+    applicablePropertyTypes: [],
+    applicableTransactionTypes: ['BUY'],
+    estimatedDurationHours: 0,
+    requiresPhysicalPresence: false,
     aiCapabilitiesUsed: [],
     deliverables: {
       items: [
-        { name: 'Soil Test Report', description: 'Soil composition, bearing capacity, recommendations', format: 'PDF' },
+        { name: 'EMI Schedule', description: 'Amortization schedule', format: 'JSON' },
       ],
     },
-    defaultPriceINR: 8000,
-    priceType: 'RANGE',
-  },
+  }
 ];

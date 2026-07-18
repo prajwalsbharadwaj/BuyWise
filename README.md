@@ -13,19 +13,19 @@
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 15 (App Router) |
-| Language | TypeScript |
-| Database | PostgreSQL + PostGIS (Neon) |
-| ORM | Prisma |
-| Auth | NextAuth.js v5 |
-| AI | Google Gemini API |
-| Maps | Google Maps Platform |
-| Images | Cloudinary |
-| Payments | Razorpay |
-| Email | Resend |
-| Hosting | Vercel |
+| Layer     | Technology                  |
+| --------- | --------------------------- |
+| Framework | Next.js 15 (App Router)     |
+| Language  | TypeScript                  |
+| Database  | PostgreSQL + PostGIS (Neon) |
+| ORM       | Prisma                      |
+| Auth      | NextAuth.js v5              |
+| AI        | Google Gemini API           |
+| Maps      | Google Maps Platform        |
+| Images    | Cloudinary                  |
+| Payments  | Razorpay                    |
+| Email     | Resend                      |
+| Hosting   | Vercel                      |
 
 ## Getting Started
 
@@ -39,7 +39,7 @@
 ```bash
 # Clone the repository
 git clone <repo-url>
-cd AishwaryaTech
+cd "Prajwal Tech Solutions Limited"
 
 # Install dependencies
 npm install
@@ -87,4 +87,4 @@ docs/
 
 ## License
 
-Proprietary — AishwaryaTech Private Limited
+Proprietary — Prajwal Tech Solutions Private Limited

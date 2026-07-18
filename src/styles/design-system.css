@@ -18,31 +18,31 @@
 :root {
   /* --- Color Palette --- */
   
-  /* Primary: Deep Trust Blue */
-  --color-primary-50:  #eef2ff;
-  --color-primary-100: #dbe4ff;
-  --color-primary-200: #bfcfff;
-  --color-primary-300: #93aeff;
-  --color-primary-400: #6084fc;
-  --color-primary-500: #3b5ef8;
-  --color-primary-600: #253eed;
-  --color-primary-700: #1d2eda;
-  --color-primary-800: #1e28b0;
-  --color-primary-900: #1e278b;
-  --color-primary-950: #161955;
+  /* Primary: Deep Trust Navy (from Logo) */
+  --color-primary-50:  #eef2f6;
+  --color-primary-100: #d5e0ec;
+  --color-primary-200: #adc6dd;
+  --color-primary-300: #7fa7ca;
+  --color-primary-400: #5587b4;
+  --color-primary-500: #0b2d53; /* Logo Navy */
+  --color-primary-600: #092442;
+  --color-primary-700: #071a31;
+  --color-primary-800: #041221;
+  --color-primary-900: #020910;
+  --color-primary-950: #010508;
 
-  /* Secondary: Emerald Growth */
-  --color-secondary-50:  #ecfdf5;
-  --color-secondary-100: #d1fae5;
-  --color-secondary-200: #a7f3d0;
-  --color-secondary-300: #6ee7b7;
-  --color-secondary-400: #34d399;
-  --color-secondary-500: #10b981;
-  --color-secondary-600: #059669;
-  --color-secondary-700: #047857;
-  --color-secondary-800: #065f46;
-  --color-secondary-900: #064e3b;
-  --color-secondary-950: #022c22;
+  /* Secondary: Emerald Growth (from Logo checkmark) */
+  --color-secondary-50:  #eef9f4;
+  --color-secondary-100: #d4f0e3;
+  --color-secondary-200: #ade0c8;
+  --color-secondary-300: #7dcba8;
+  --color-secondary-400: #4eb687;
+  --color-secondary-500: #169c64; /* Logo Green */
+  --color-secondary-600: #117d50;
+  --color-secondary-700: #0d5e3c;
+  --color-secondary-800: #083e28;
+  --color-secondary-900: #041f14;
+  --color-secondary-950: #020f0a;
 
   /* Accent: Warm Amber (CTAs, urgency) */
   --color-accent-50:  #fffbeb;

@@ -9,7 +9,6 @@
  * Note: Verify rates before production use — regulations change.
  */
 
-import type { LocationConfig } from './types';
 
 export const karnatakaRegulations: LocationConfig[] = [
   {
