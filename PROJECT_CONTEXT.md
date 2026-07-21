@@ -32,4 +32,4 @@ BuyWise is an "operating system for real estate transactions." It is not a prope
 ## Immutable Principles (What we must not change)
 - **The Transaction is the Sun**: Every service, document, message, and payment MUST belong to a `Transaction`. We do not offer standalone services disconnected from a property transaction.
 - **Data Integrity Over Speed**: Because this handles real estate, server actions must be strict. (We currently lack validation).
-- **Vanilla CSS**: We are intentionally avoiding Tailwind in favor of a bespoke, premium CSS token system to ensure a highly customized "wow" factor.
+- **Vanilla CSS**: We are intentionally avoiding Tailwind in favor of a bespoke, premium CSS token system to ensure a highly customized "wow" factor
