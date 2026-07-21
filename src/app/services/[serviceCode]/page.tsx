@@ -2,6 +2,7 @@ import * as React from 'react';
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 import { Badge } from '@/components/ui/Badge/Badge';
 import { Button } from '@/components/ui/Button/Button';
 import { Card, CardContent } from '@/components/ui/Card/Card';
@@ -25,6 +26,9 @@ export default async function ServiceDetailPage({
   if (!service) {
     notFound();
   }
+
+  const session = await auth();
+  const role = (session?.user as any)?.role || 'GUEST';
 
   // Parse JSON deliverables safely
   let deliverables: string[] = [];
@@ -106,15 +110,24 @@ export default async function ServiceDetailPage({
       <Card glass style={{ padding: 'var(--space-8)', textAlign: 'center', backgroundColor: 'var(--bg-tertiary)' }}>
         <h3 style={{ fontSize: 'var(--text-xl)', fontFamily: 'var(--font-display)', marginBottom: 'var(--space-2)' }}>How to purchase</h3>
         <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-6)' }}>
-          To ensure we have all the correct context, services can only be purchased from within an active transaction. 
+          To ensure we have all the correct context, services can only be purchased from within an active transaction or property listing. 
         </p>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', alignItems: 'center' }}>
-          <Link href="/properties" style={{ textDecoration: 'none', width: '100%', maxWidth: '300px' }}>
-            <Button size="lg" variant="primary" style={{ width: '100%' }}>
-              Browse Properties
-            </Button>
-          </Link>
+          {role === 'SELLER' ? (
+            <Link href="/dashboard/seller/listings" style={{ textDecoration: 'none', width: '100%', maxWidth: '300px' }}>
+              <Button size="lg" variant="primary" style={{ width: '100%' }}>
+                Manage My Listings
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/properties" style={{ textDecoration: 'none', width: '100%', maxWidth: '300px' }}>
+              <Button size="lg" variant="primary" style={{ width: '100%' }}>
+                Browse Properties
+              </Button>
+            </Link>
+          )}
+          
           <Link href="/dashboard" style={{ textDecoration: 'none', width: '100%', maxWidth: '300px' }}>
             <Button size="lg" variant="outline" style={{ width: '100%' }}>
               Go to My Dashboard

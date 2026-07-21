@@ -135,6 +135,26 @@ export default async function AdminRequestDetails({
 
           <Card>
             <CardHeader>
+              <CardTitle>AI Pipeline Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form action={async () => {
+                'use server';
+                const { processServiceRequestAI } = await import('@/actions/service.actions');
+                await processServiceRequestAI(req.id);
+              }} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+                  Manually trigger the Gemini multi-modal analysis on the attached documents to extract property entities and run risk checks.
+                </p>
+                <Button type="submit" variant="outline" style={{ width: '100%', borderColor: 'var(--primary-color)', color: 'var(--primary-color)' }}>
+                  Trigger AI Verification
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Admin Manual Override</CardTitle>
             </CardHeader>
             <CardContent>

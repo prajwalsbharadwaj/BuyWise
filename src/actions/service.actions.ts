@@ -102,3 +102,55 @@ export async function completeServiceRequest(requestId: string, notes: string, d
 
   return updatedRequest;
 }
+
+export async function processServiceRequestAI(requestId: string) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized');
+  }
+
+  const serviceRequest = await prisma.serviceRequest.findUnique({
+    where: { id: requestId },
+    include: {
+      service: true,
+      documents: true
+    }
+  });
+
+  if (!serviceRequest) {
+    throw new Error('Service request not found');
+  }
+
+  // 1. Mark as AI Processing
+  await prisma.serviceRequest.update({
+    where: { id: requestId },
+    data: { status: ServiceRequestStatus.AI_PROCESSING }
+  });
+
+  // 2. Trigger the AI Pipeline (In a real app, this might be sent to a queue)
+  const { triggerAIPipeline } = await import('@/lib/ai-pipeline');
+  
+  const results = await triggerAIPipeline({
+    serviceRequestId: requestId,
+    serviceCode: serviceRequest.service.code,
+    documentIds: serviceRequest.documents.map(d => d.id)
+  });
+
+  // 3. Update status based on results
+  // For Phase 1, we always send to ADMIN_REVIEW after AI is done so human can verify
+  const nextStatus = ServiceRequestStatus.ADMIN_REVIEW;
+
+  await prisma.serviceRequest.update({
+    where: { id: requestId },
+    data: { 
+      status: nextStatus,
+      notes: results ? "AI Analysis Completed" : "AI Analysis Failed"
+    }
+  });
+
+  revalidatePath('/admin/dashboard');
+  revalidatePath(`/admin/requests/${requestId}`);
+
+  return results;
+}
+

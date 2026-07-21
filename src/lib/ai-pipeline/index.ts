@@ -5,6 +5,9 @@
  * This is the foundation for Phase 1 (Property Document Verification) and future AI features.
  */
 
+import { prisma } from '../prisma';
+import { analyzePropertyDocument } from './gemini';
+
 export interface AIPipelineContext {
   serviceRequestId: string;
   documentIds: string[];
@@ -22,57 +25,63 @@ export abstract class AIPipelineNode {
   abstract execute(context: AIPipelineContext, previousResults: Record<string, AINodeResult>): Promise<AINodeResult>;
 }
 
-// ============================================================================
-// STUBS FOR PHASE 1 IMPLEMENTATION
-// ============================================================================
-
-export class OCRNode extends AIPipelineNode {
-  name = 'OCR';
+export class DocumentVerificationNode extends AIPipelineNode {
+  name = 'DocumentVerification';
   
   async execute(context: AIPipelineContext): Promise<AINodeResult> {
-    console.log(`[AI Pipeline] Running OCR for request ${context.serviceRequestId}...`);
-    // TODO: Implement Google Vision / AWS Textract integration here
-    return {
-      success: true,
-      data: { text: "Mock extracted text from documents" }
-    };
-  }
-}
-
-export class EntityExtractionNode extends AIPipelineNode {
-  name = 'EntityExtraction';
-  
-  async execute(context: AIPipelineContext, previousResults: Record<string, AINodeResult>): Promise<AINodeResult> {
-    console.log(`[AI Pipeline] Extracting entities for request ${context.serviceRequestId}...`);
-    const ocrData = previousResults['OCR']?.data?.text || '';
+    console.log(`[AI Pipeline] Running Document Verification for request ${context.serviceRequestId}...`);
     
-    // TODO: Implement Gemini / LLM extraction of key fields (Buyer, Seller, Property Address, etc.)
-    return {
-      success: true,
-      data: { 
-        buyerName: "John Doe", 
-        sellerName: "Jane Smith", 
-        propertyAddress: "123 Mock Street, Bengaluru" 
-      }
-    };
-  }
-}
+    try {
+      // 1. Fetch the documents from the database
+      const documents = await prisma.document.findMany({
+        where: {
+          id: { in: context.documentIds }
+        }
+      });
 
-export class RiskEngineNode extends AIPipelineNode {
-  name = 'RiskEngine';
-  
-  async execute(context: AIPipelineContext, previousResults: Record<string, AINodeResult>): Promise<AINodeResult> {
-    console.log(`[AI Pipeline] Running Risk Rules for request ${context.serviceRequestId}...`);
-    const entities = previousResults['EntityExtraction']?.data || {};
-    
-    // TODO: Implement hardcoded rules and AI risk analysis (e.g., mismatching names)
-    return {
-      success: true,
-      data: { 
-        confidenceScore: 0.85,
-        flags: ["Address format differs slightly from standard"]
+      if (documents.length === 0) {
+        return { success: false, error: "No documents found to process" };
       }
-    };
+
+      const results = [];
+      let overallConfidence = 1.0;
+      let allFlags: string[] = [];
+
+      // 2. Process each document using Gemini
+      for (const doc of documents) {
+        console.log(`[AI Pipeline] Analyzing document ${doc.name} (${doc.id})...`);
+        
+        const analysis = await analyzePropertyDocument(doc.storageUrl, doc.mimeType);
+        
+        // 3. Save the results back to the Document
+        await prisma.document.update({
+          where: { id: doc.id },
+          data: {
+            aiAnalysis: analysis as any,
+            verificationStatus: 'AI_REVIEWED'
+          }
+        });
+
+        results.push({ documentId: doc.id, analysis });
+        
+        // Accumulate risk profile
+        overallConfidence = Math.min(overallConfidence, analysis.riskFlags.confidenceScore);
+        allFlags = [...allFlags, ...analysis.riskFlags.flags];
+      }
+
+      return {
+        success: true,
+        data: { 
+          processedCount: documents.length,
+          overallConfidence,
+          flags: allFlags,
+          documentResults: results
+        }
+      };
+    } catch (error: any) {
+      console.error(`[AI Pipeline] Error in DocumentVerificationNode:`, error);
+      return { success: false, error: error.message || "Failed to verify documents" };
+    }
   }
 }
 
@@ -116,11 +125,10 @@ export async function triggerAIPipeline(context: AIPipelineContext) {
   let nodes: AIPipelineNode[] = [];
   
   if (context.serviceCode === 'VER_PROPERTY_DOCUMENT') {
-    nodes = [new OCRNode(), new EntityExtractionNode(), new RiskEngineNode()];
+    nodes = [new DocumentVerificationNode()];
   } else {
-    // Other pipelines to be defined in future phases
-    console.warn(`[AI Pipeline] No defined pipeline for service ${context.serviceCode}`);
-    return null;
+    // For other services, we can also use DocumentVerificationNode if it's generic enough
+    nodes = [new DocumentVerificationNode()];
   }
 
   const orchestrator = new AIPipelineOrchestrator(nodes);

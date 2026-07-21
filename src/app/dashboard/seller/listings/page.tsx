@@ -36,9 +36,11 @@ export default async function SellerListingsPage() {
             Manage your listed properties and track their performance.
           </p>
         </div>
-        <Button variant="primary" leftIcon={<PlusCircle size={18} />}>
-          Create New Listing
-        </Button>
+        <Link href="/seller/list" style={{ textDecoration: 'none' }}>
+          <Button variant="primary" leftIcon={<PlusCircle size={18} />}>
+            Create New Listing
+          </Button>
+        </Link>
       </div>
 
       {listings.length === 0 ? (
@@ -49,7 +51,9 @@ export default async function SellerListingsPage() {
               <h3 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--weight-semibold)', marginBottom: 'var(--space-2)' }}>No Listings Yet</h3>
               <p style={{ color: 'var(--text-secondary)' }}>You haven't added any properties to the platform yet.</p>
             </div>
-            <Button variant="primary" style={{ marginTop: 'var(--space-2)' }}>Add Your First Property</Button>
+            <Link href="/seller/list" style={{ textDecoration: 'none' }}>
+              <Button variant="primary" style={{ marginTop: 'var(--space-2)' }}>Add Your First Property</Button>
+            </Link>
           </CardContent>
         </Card>
       ) : (

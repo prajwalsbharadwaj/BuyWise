@@ -24,7 +24,8 @@ export const serviceCatalog = [
       title: "Property Document Setup",
       fields: [
         { name: "documentType", label: "Primary Document Type", type: "select", options: ["Sale Deed", "Allotment Letter", "Agreement to Sell"] },
-        { name: "propertyAgeYears", label: "Approximate Property Age (Years)", type: "number" }
+        { name: "propertyAgeYears", label: "Approximate Property Age (Years)", type: "number" },
+        { name: "khataType", label: "Khata Type (Bangalore)", type: "select", options: ["e-Khata (e-Aasthi)", "A-Khata (Paper)", "B-Khata", "E-Swathu (Panchayat)", "Unknown"] }
       ]
     },
     requiredDocuments: ["PRIMARY_DEED", "ID_PROOF"],
@@ -67,8 +68,9 @@ export const serviceCatalog = [
     questionnaireSchema: {
       title: "Ownership Details",
       fields: [
-        { name: "surveyNumber", label: "Survey/Khata Number", type: "text" },
-        { name: "village", label: "Village/Hobli", type: "text" }
+        { name: "surveyNumber", label: "Survey/Khata/PID Number", type: "text" },
+        { name: "village", label: "Village/Hobli/Ward", type: "text" },
+        { name: "hasDigitalRecord", label: "Is there a Kaveri 2.0 or e-Aasthi record?", type: "boolean" }
       ]
     },
     requiredDocuments: ["PRIMARY_DEED", "LATEST_TAX_RECEIPT"],
@@ -112,7 +114,9 @@ export const serviceCatalog = [
       title: "Title Verification Context",
       fields: [
         { name: "knownDisputes", label: "Are there any known disputes?", type: "boolean" },
-        { name: "loanIntended", label: "Are you planning to take a bank loan?", type: "boolean" }
+        { name: "loanIntended", label: "Are you planning to take a bank loan?", type: "boolean" },
+        { name: "isGrantedLand", label: "Is this SC/ST granted land (PTCL Act)?", type: "boolean" },
+        { name: "nearWaterBody", label: "Is it within 75m of a Lake or Rajakaluve?", type: "boolean" }
       ]
     },
     requiredDocuments: ["PRIMARY_DEED", "MOTHER_DEED", "ENCUMBRANCE_CERTIFICATE_15_YEARS"],
@@ -240,7 +244,8 @@ export const serviceCatalog = [
       title: "Registration Setup",
       fields: [
         { name: "preferredDate", label: "Preferred Registration Date", type: "date" },
-        { name: "sroOffice", label: "Sub-Registrar Office", type: "text" }
+        { name: "sroOffice", label: "Sub-Registrar Office", type: "text" },
+        { name: "hasEKhata", label: "Do you have the mandatory e-Khata?", type: "boolean" }
       ]
     },
     requiredDocuments: ["SIGNED_SALE_AGREEMENT", "DD_FOR_STAMP_DUTY"],
@@ -327,7 +332,8 @@ export const serviceCatalog = [
       title: "Loan Requirements",
       fields: [
         { name: "loanAmount", label: "Required Loan Amount", type: "number" },
-        { name: "employmentType", label: "Employment Type", type: "select", options: ["Salaried", "Self-Employed"] }
+        { name: "employmentType", label: "Employment Type", type: "select", options: ["Salaried", "Self-Employed"] },
+        { name: "propertyKhata", label: "Property Khata Type", type: "select", options: ["A-Khata / BDA Approved", "B-Khata / Panchayat (NBFC Routing)"] }
       ]
     },
     requiredDocuments: ["INCOME_PROOF", "BANK_STATEMENTS", "ITR"],
